@@ -1,78 +1,24 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import plotly.express as px
 import plotly.graph_objects as go
+import plotly.express as px
 import time
 
-# -------------------------------------------------
-# Page Config
-# -------------------------------------------------
-st.set_page_config(
-    page_title="EduGuard AI",
-    page_icon="🚀",
-    layout="wide"
-)
+st.set_page_config(page_title="EduGuard AI", layout="wide")
 
-# -------------------------------------------------
+# ----------------------------
 # Session State
-# -------------------------------------------------
+# ----------------------------
 if "page" not in st.session_state:
     st.session_state.page = "dashboard"
 
 if "risk_score" not in st.session_state:
     st.session_state.risk_score = None
 
-# -------------------------------------------------
-# Styling (Light + Dark Mode Safe)
-# -------------------------------------------------
-st.markdown("""
-<style>
-.glow-card {
-    padding: 20px;
-    border-radius: 15px;
-    transition: 0.3s ease;
-}
-.result-card {
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    border-left: 4px solid #0ea5e9;
-}
-
-/* Dark */
-[data-theme="dark"] .stApp {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-}
-[data-theme="dark"] .glow-card {
-    background: rgba(255,255,255,0.06);
-    color: white;
-}
-[data-theme="dark"] .result-card {
-    background: rgba(255,255,255,0.05);
-    color: white;
-}
-
-/* Light */
-[data-theme="light"] .stApp {
-    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-}
-[data-theme="light"] .glow-card {
-    background: white;
-    color: #1e293b;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-[data-theme="light"] .result-card {
-    background: white;
-    color: #1e293b;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------
+# ----------------------------
 # Load Data
-# -------------------------------------------------
+# ----------------------------
 df = pd.read_csv("StudentPerformanceFactors.csv")
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
@@ -80,166 +26,105 @@ score_column = "exam_score"
 median_score = df[score_column].median()
 df["risk"] = df[score_column].apply(lambda x: 1 if x < median_score else 0)
 
-# -------------------------------------------------
-# Load Model
-# -------------------------------------------------
 model = joblib.load("trained_model.pkl")
 feature_columns = joblib.load("feature_columns.pkl")
 
+theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
+
 # ==========================================================
-# DASHBOARD PAGE
+# DASHBOARD
 # ==========================================================
 if st.session_state.page == "dashboard":
 
-    col1, col2 = st.columns([8,2])
+    st.title("🚀 EduGuard AI - Institutional Dashboard")
 
-    with col1:
-        st.title("🚀 EduGuard AI - Institutional Dashboard")
-
-    with col2:
-        if st.button("🔍 AI Prediction"):
-            st.session_state.page = "prediction"
-            st.rerun()
-
-    st.divider()
+    if st.button("🔍 AI Prediction"):
+        st.session_state.page = "prediction"
+        st.rerun()
 
     total = len(df)
     at_risk = int(df["risk"].sum())
     safe = total - at_risk
-    risk_percent = round((at_risk / total) * 100, 2)
-    avg_score = round(df[score_column].mean(), 2)
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    def kpi(title, value):
-        st.markdown(f"""
-        <div class="glow-card">
-            <div>{title}</div>
-            <div style="font-size:24px;color:#3b82f6;"><b>{value}</b></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col1: kpi("Total Students", total)
-    with col2: kpi("At Risk %", f"{risk_percent}%")
-    with col3: kpi("Average Score", avg_score)
-    with col4: kpi("Model Status", "Active")
-
-    st.divider()
-
-    theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
 
     col1, col2 = st.columns(2)
 
     with col1:
-        fig_pie = px.pie(
-            values=[safe, at_risk],
-            names=["Safe", "At Risk"],
-            hole=0.6
-        )
-        fig_pie.update_layout(template=theme)
-        st.plotly_chart(fig_pie, use_container_width=True)
+        fig = px.pie(values=[safe, at_risk], names=["Safe", "At Risk"], hole=0.6)
+        fig.update_layout(template=theme)
+        st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        fig_hist = px.histogram(df, x=score_column, nbins=30)
-        fig_hist.update_layout(template=theme)
-        st.plotly_chart(fig_hist, use_container_width=True)
+        fig2 = px.histogram(df, x=score_column, nbins=30)
+        fig2.update_layout(template=theme)
+        st.plotly_chart(fig2, use_container_width=True)
 
 # ==========================================================
-# PREDICTION PAGE
+# PREDICTION
 # ==========================================================
 elif st.session_state.page == "prediction":
 
-    col1, col2 = st.columns([8,2])
+    st.title("🔍 AI Risk Assessment Engine")
 
-    with col1:
-        st.title("🔍 AI Risk Assessment Engine")
-
-    with col2:
-        if st.button("⬅ Back"):
-            st.session_state.page = "dashboard"
-            st.session_state.risk_score = None
-            st.rerun()
-
-    st.divider()
-
-    def validate(value, min_val, max_val):
-        try:
-            val = int(value)
-        except:
-            return min_val, False
-        if val < min_val or val > max_val:
-            return max(min(val, max_val), min_val), False
-        return val, True
+    if st.button("⬅ Back"):
+        st.session_state.page = "dashboard"
+        st.session_state.risk_score = None
+        st.rerun()
 
     col1, col2 = st.columns(2)
 
     with col1:
-        hours_raw = st.text_input("Hours Studied (0–60)", "0")
-        attendance_raw = st.text_input("Attendance % (0–100)", "0")
+        hours = st.number_input("Hours Studied", 0, 60, 10)
+        attendance = st.number_input("Attendance %", 0, 100, 70)
 
     with col2:
-        sleep_raw = st.text_input("Sleep Hours (0–12)", "0")
-        score_raw = st.text_input("Previous Score (0–100)", "0")
-
-    hours_studied, h_valid = validate(hours_raw, 0, 60)
-    attendance, a_valid = validate(attendance_raw, 0, 100)
-    sleep_hours, s_valid = validate(sleep_raw, 0, 12)
-    previous_score, p_valid = validate(score_raw, 0, 100)
+        sleep = st.number_input("Sleep Hours", 0, 12, 7)
+        previous = st.number_input("Previous Score", 0, 100, 60)
 
     if st.button("Run AI Analysis"):
 
-        if not (h_valid and a_valid and s_valid and p_valid):
-            st.error("Please enter valid integer values.")
-        else:
-            with st.spinner("🧠 AI analyzing behavioral patterns..."):
-                time.sleep(1)
+        input_dict = {
+            "hours_studied": hours,
+            "attendance": attendance,
+            "sleep_hours": sleep,
+            "previous_scores": previous
+        }
 
-            input_dict = {
-                "hours_studied": hours_studied,
-                "attendance": attendance,
-                "sleep_hours": sleep_hours,
-                "previous_scores": previous_score
-            }
+        input_df = pd.DataFrame([input_dict])
 
-            input_df = pd.DataFrame([input_dict])
+        for col in feature_columns:
+            if col not in input_df.columns:
+                input_df[col] = 0
 
-            for col in feature_columns:
-                if col not in input_df.columns:
-                    input_df[col] = 0
+        input_df = input_df[feature_columns]
 
-            input_df = input_df[feature_columns]
+        prob = model.predict_proba(input_df)[0][1]
+        risk_score = int(prob * 100)
+        st.session_state.risk_score = risk_score
 
-            prob = model.predict_proba(input_df)[0][1]
-            st.session_state.risk_score = int(prob * 100)
-
-    # -------------------------------------------------
-    # Display Results
-    # -------------------------------------------------
+    # ----------------------------
+    # RESULTS
+    # ----------------------------
     if st.session_state.risk_score is not None:
 
         risk_score = st.session_state.risk_score
-        theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
 
-        # Risk Colors
+        # Determine color
         if risk_score <= 30:
-            bar_color = "#22c55e"
-            risk_label = "LOW RISK"
+            color = "#22c55e"
         elif risk_score <= 60:
-            bar_color = "#facc15"
-            risk_label = "MODERATE RISK"
+            color = "#facc15"
         else:
-            bar_color = "#ef4444"
-            risk_label = "HIGH RISK"
+            color = "#ef4444"
 
         # Premium Gauge
         fig = go.Figure(go.Indicator(
             mode="gauge+number",
             value=risk_score,
             number={'suffix': "%"},
-            title={'text': "AI Risk Intelligence Score"},
+            title={'text': "AI Risk Score"},
             gauge={
                 'axis': {'range': [0, 100]},
-                'bar': {'color': bar_color},
+                'bar': {'color': color},
                 'steps': [
                     {'range': [0, 30], 'color': "rgba(34,197,94,0.2)"},
                     {'range': [30, 60], 'color': "rgba(250,204,21,0.2)"},
@@ -248,83 +133,66 @@ elif st.session_state.page == "prediction":
             }
         ))
 
-        fig.update_layout(template=theme, height=400)
+        fig.update_layout(template=theme, height=350)
         st.plotly_chart(fig, use_container_width=True)
 
-        # Risk Badge
-        st.markdown(f"""
-        <div style="padding:10px 20px;
-        border-radius:30px;
-        background:{bar_color};
-        color:white;
-        display:inline-block;
-        font-weight:bold;">
-        {risk_label}
-        </div>
-        """, unsafe_allow_html=True)
+        # =====================================================
+        # 🔥 AUTOMATIC AI OPTIMIZATION ENGINE
+        # =====================================================
+        st.markdown("## 🤖 AI Recommended Optimization Plan")
 
-        # ==========================================
-        # Academic Stability Index
-        # ==========================================
-        st.markdown("## 📊 Academic Stability Index")
+        # Auto improvements logic
+        improved_attendance = max(attendance, 85)
+        improved_hours = max(hours, 20)
+        improved_sleep = max(sleep, 7)
+        improved_score = max(previous, 75)
 
-        stability = 100 - risk_score
-
-        fig_stability = go.Figure(go.Indicator(
-            mode="number",
-            value=stability,
-            number={'suffix': "%"},
-            title={'text': "Stability Score"}
-        ))
-
-        fig_stability.update_layout(template=theme, height=200)
-        st.plotly_chart(fig_stability, use_container_width=True)
-
-        # ==========================================
-        # Color-Coded Behavioral Impact
-        # ==========================================
-        st.markdown("## 📈 Behavioral Impact Analysis")
-
-        impact = {
-            "Attendance": max(0, 100 - attendance),
-            "Study Hours": max(0, 60 - hours_studied),
-            "Sleep Quality": max(0, 8 - sleep_hours) * 10,
-            "Previous Performance": max(0, 100 - previous_score)
+        optimized_input = {
+            "hours_studied": improved_hours,
+            "attendance": improved_attendance,
+            "sleep_hours": improved_sleep,
+            "previous_scores": improved_score
         }
 
-        impact_df = pd.DataFrame({
-            "Factor": list(impact.keys()),
-            "Impact": list(impact.values())
-        })
+        sim_df = pd.DataFrame([optimized_input])
 
-        def get_color(val):
-            if val < 30:
-                return "#22c55e"
-            elif val < 60:
-                return "#facc15"
-            else:
-                return "#ef4444"
+        for col in feature_columns:
+            if col not in sim_df.columns:
+                sim_df[col] = 0
 
-        impact_df["Color"] = impact_df["Impact"].apply(get_color)
+        sim_df = sim_df[feature_columns]
 
-        fig_impact = go.Figure()
+        new_prob = model.predict_proba(sim_df)[0][1]
+        new_risk = int(new_prob * 100)
 
-        for _, row in impact_df.iterrows():
-            fig_impact.add_trace(go.Bar(
-                x=[row["Impact"]],
-                y=[row["Factor"]],
-                orientation="h",
-                marker_color=row["Color"],
-                text=f'{row["Impact"]}',
-                textposition="inside"
+        st.markdown("### 📉 Animated Risk Reduction")
+
+        placeholder = st.empty()
+
+        for i in range(risk_score, new_risk - 1, -1):
+            fig_anim = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=i,
+                number={'suffix': "%"},
+                gauge={'axis': {'range': [0, 100]}}
             ))
+            fig_anim.update_layout(template=theme, height=300)
+            placeholder.plotly_chart(fig_anim, use_container_width=True)
+            time.sleep(0.02)
 
-        fig_impact.update_layout(
-            template=theme,
-            height=400,
-            xaxis_title="Relative Contribution",
-            yaxis_title="Behavioral Factor",
-            showlegend=False
-        )
+        reduction = risk_score - new_risk
 
-        st.plotly_chart(fig_impact, use_container_width=True)
+        st.success(f"AI Reduced Risk by {reduction}% through behavioral optimization.")
+
+        colA, colB = st.columns(2)
+        with colA:
+            st.metric("Original Risk", f"{risk_score}%")
+        with colB:
+            st.metric("Optimized Risk", f"{new_risk}%", delta=f"-{reduction}%")
+
+        st.markdown("### 📌 Recommended Improvements")
+
+        st.write(f"- Increase Attendance to **{improved_attendance}%**")
+        st.write(f"- Increase Study Hours to **{improved_hours} hours**")
+        st.write(f"- Maintain Sleep at **{improved_sleep} hours**")
+        st.write(f"- Improve Performance to **{improved_score}%**")
