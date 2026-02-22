@@ -240,20 +240,84 @@ elif st.session_state.page == "prediction":
     # -------------------------------------------------
     # Display Results (After Prediction)
     # -------------------------------------------------
-    if st.session_state.risk_score is not None:
+    # -------------------------------------------------
+# PREMIUM RISK GAUGE
+# -------------------------------------------------
 
-        risk_score = st.session_state.risk_score
+# Detect theme
+theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
 
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=risk_score,
-            title={'text': "AI Risk Score"},
-            gauge={'axis': {'range': [0, 100]}}
-        ))
-        fig.update_layout(template="plotly_dark", height=350)
-        st.plotly_chart(fig, use_container_width=True)
+# Determine risk color & label
+if risk_score <= 30:
+    bar_color = "#22c55e"
+    risk_label = "LOW RISK"
+elif risk_score <= 60:
+    bar_color = "#facc15"
+    risk_label = "MODERATE RISK"
+else:
+    bar_color = "#ef4444"
+    risk_label = "HIGH RISK"
 
-        st.markdown("## 🚀 Strategic Academic Roadmap")
+fig = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=risk_score,
+    number={
+        'font': {'size': 48},
+        'suffix': "%"
+    },
+    title={
+        'text': "<b>AI Risk Intelligence Score</b>",
+        'font': {'size': 20}
+    },
+    gauge={
+        'shape': "angular",
+        'axis': {
+            'range': [0, 100],
+            'tickwidth': 1,
+            'tickcolor': "gray"
+        },
+        'bar': {
+            'color': bar_color,
+            'thickness': 0.35
+        },
+        'bgcolor': "transparent",
+        'borderwidth': 2,
+        'bordercolor': "gray",
+        'steps': [
+            {'range': [0, 30], 'color': "rgba(34,197,94,0.2)"},
+            {'range': [30, 60], 'color': "rgba(250,204,21,0.2)"},
+            {'range': [60, 100], 'color': "rgba(239,68,68,0.2)"}
+        ],
+        'threshold': {
+            'line': {'color': bar_color, 'width': 6},
+            'thickness': 0.75,
+            'value': risk_score
+        }
+    }
+))
+
+fig.update_layout(
+    template=theme,
+    height=420,
+    margin=dict(t=60, b=0, l=20, r=20)
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Premium Risk Badge
+st.markdown(f"""
+<div style="
+padding:12px 20px;
+border-radius:30px;
+display:inline-block;
+font-weight:bold;
+background:{bar_color};
+color:white;
+margin-top:10px;
+font-size:16px;">
+{risk_label}
+</div>
+""", unsafe_allow_html=True)
 
         # Tier-Based Strategy
         if risk_score <= 10:
