@@ -24,31 +24,69 @@ if "risk_score" not in st.session_state:
 
 st.markdown("""
 <style>
-.stApp {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-}
+
+/* ===== GLOBAL ===== */
 .glow-card {
     padding: 20px;
     border-radius: 15px;
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(12px);
     transition: 0.3s ease;
 }
-.glow-card:hover {
-    box-shadow: 0 0 20px #38bdf8;
-}
+
 .result-card {
     padding: 15px;
     border-radius: 10px;
-    background: rgba(255,255,255,0.05);
     margin-bottom: 10px;
     border-left: 4px solid #0ea5e9;
 }
-.stButton>button {
+
+/* ===== DARK MODE ===== */
+[data-theme="dark"] .stApp {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+[data-theme="dark"] .glow-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px);
+    color: white;
+}
+
+[data-theme="dark"] .result-card {
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+
+[data-theme="dark"] .stButton>button {
     background: #0ea5e9;
     color: white;
-    border-radius: 8px;
 }
+
+/* ===== LIGHT MODE ===== */
+[data-theme="light"] .stApp {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+}
+
+[data-theme="light"] .glow-card {
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    color: #1e293b;
+}
+
+[data-theme="light"] .result-card {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    color: #1e293b;
+}
+
+[data-theme="light"] .stButton>button {
+    background: #2563eb;
+    color: white;
+}
+
+.stButton>button:hover {
+    transform: scale(1.05);
+    transition: 0.2s ease;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
