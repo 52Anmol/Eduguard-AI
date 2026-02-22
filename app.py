@@ -53,7 +53,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-df = pd.read_csv("data/StudentPerformanceFactors.csv")
+df = pd.read_csv("StudentPerformanceFactors.csv")
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
 score_column = "exam_score"
