@@ -63,8 +63,8 @@ df["risk"] = df[score_column].apply(lambda x: 1 if x < median_score else 0)
 
 # Load Model
 
-model = joblib.load("model/trained_model.pkl")
-feature_columns = joblib.load("model/feature_columns.pkl")
+model = joblib.load("trained_model.pkl")
+feature_columns = joblib.load("feature_columns.pkl")
 
 # ==========================================================
 # DASHBOARD PAGE
