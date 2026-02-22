@@ -182,7 +182,9 @@ elif st.session_state.page == "prediction":
 
     st.divider()
 
+    # -----------------------------
     # Validation Function
+    # -----------------------------
     def validate(value, min_val, max_val):
         try:
             val = int(value)
@@ -207,6 +209,9 @@ elif st.session_state.page == "prediction":
     sleep_hours, s_valid = validate(sleep_raw, 0, 12)
     previous_score, p_valid = validate(score_raw, 0, 100)
 
+    # -----------------------------
+    # Prediction Button
+    # -----------------------------
     if st.button("Run AI Analysis"):
 
         if not (h_valid and a_valid and s_valid and p_valid):
@@ -232,133 +237,107 @@ elif st.session_state.page == "prediction":
             input_df = input_df[feature_columns]
 
             prob = model.predict_proba(input_df)[0][1]
-            risk_score = int(prob * 100)
+            st.session_state.risk_score = int(prob * 100)
 
-            # Save to session
-            st.session_state.risk_score = risk_score
+    # -----------------------------
+    # Display Results
+    # -----------------------------
+    if st.session_state.risk_score is not None:
 
-    # -------------------------------------------------
-    # Display Results (After Prediction)
-    # -------------------------------------------------
-    # -------------------------------------------------
-# PREMIUM RISK GAUGE
-# -------------------------------------------------
+        risk_score = st.session_state.risk_score
 
-# Detect theme
-theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
+        # Detect theme
+        theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
 
-# Determine risk color & label
-if risk_score <= 30:
-    bar_color = "#22c55e"
-    risk_label = "LOW RISK"
-elif risk_score <= 60:
-    bar_color = "#facc15"
-    risk_label = "MODERATE RISK"
-else:
-    bar_color = "#ef4444"
-    risk_label = "HIGH RISK"
+        # Risk Color + Label
+        if risk_score <= 30:
+            bar_color = "#22c55e"
+            risk_label = "LOW RISK"
+        elif risk_score <= 60:
+            bar_color = "#facc15"
+            risk_label = "MODERATE RISK"
+        else:
+            bar_color = "#ef4444"
+            risk_label = "HIGH RISK"
 
-fig = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=risk_score,
-    number={
-        'font': {'size': 48},
-        'suffix': "%"
-    },
-    title={
-        'text': "<b>AI Risk Intelligence Score</b>",
-        'font': {'size': 20}
-    },
-    gauge={
-        'shape': "angular",
-        'axis': {
-            'range': [0, 100],
-            'tickwidth': 1,
-            'tickcolor': "gray"
-        },
-        'bar': {
-            'color': bar_color,
-            'thickness': 0.35
-        },
-        'bgcolor': "transparent",
-        'borderwidth': 2,
-        'bordercolor': "gray",
-        'steps': [
-            {'range': [0, 30], 'color': "rgba(34,197,94,0.2)"},
-            {'range': [30, 60], 'color': "rgba(250,204,21,0.2)"},
-            {'range': [60, 100], 'color': "rgba(239,68,68,0.2)"}
-        ],
-        'threshold': {
-            'line': {'color': bar_color, 'width': 6},
-            'thickness': 0.75,
-            'value': risk_score
-        }
-    }
-))
+        # -----------------------------
+        # PREMIUM GAUGE
+        # -----------------------------
+        fig = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=risk_score,
+            number={'font': {'size': 48}, 'suffix': "%"},
+            title={'text': "<b>AI Risk Intelligence Score</b>", 'font': {'size': 20}},
+            gauge={
+                'shape': "angular",
+                'axis': {'range': [0, 100]},
+                'bar': {'color': bar_color, 'thickness': 0.35},
+                'steps': [
+                    {'range': [0, 30], 'color': "rgba(34,197,94,0.2)"},
+                    {'range': [30, 60], 'color': "rgba(250,204,21,0.2)"},
+                    {'range': [60, 100], 'color': "rgba(239,68,68,0.2)"}
+                ],
+                'threshold': {
+                    'line': {'color': bar_color, 'width': 6},
+                    'thickness': 0.75,
+                    'value': risk_score
+                }
+            }
+        ))
 
-fig.update_layout(
-    template=theme,
-    height=420,
-    margin=dict(t=60, b=0, l=20, r=20)
-)
+        fig.update_layout(
+            template=theme,
+            height=420,
+            margin=dict(t=60, b=0, l=20, r=20)
+        )
 
-st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
-# Premium Risk Badge
-st.markdown(f"""
-<div style="
-padding:12px 20px;
-border-radius:30px;
-display:inline-block;
-font-weight:bold;
-background:{bar_color};
-color:white;
-margin-top:10px;
-font-size:16px;">
-{risk_label}
-</div>
-""", unsafe_allow_html=True)
+        # Risk Badge
+        st.markdown(f"""
+        <div style="
+        padding:12px 20px;
+        border-radius:30px;
+        display:inline-block;
+        font-weight:bold;
+        background:{bar_color};
+        color:white;
+        margin-top:10px;
+        font-size:16px;">
+        {risk_label}
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Tier-Based Strategy
+        st.markdown("## 🚀 Strategic Academic Roadmap")
+
+        # -----------------------------
+        # Roadmap
+        # -----------------------------
         if risk_score <= 10:
-
-            st.success("Excellent performance stability detected. Keep maintaining this discipline.")
-
+            st.success("Excellent performance stability detected.")
             roadmap = [
                 "Maintain structured study habits.",
                 "Continue high attendance consistency.",
                 "Engage in advanced skill development.",
-                "Mentor peers to reinforce learning.",
-                "Track monthly progress to sustain excellence."
+                "Track monthly progress."
             ]
-
-        elif 10 < risk_score <= 30:
-
+        elif risk_score <= 30:
             roadmap = [
                 "Maintain attendance above 85%.",
-                "Slightly increase weekly study hours.",
-                "Review weak topics proactively.",
-                "Improve sleep consistency.",
+                "Increase study hours slightly.",
                 "Perform weekly academic review."
             ]
-
-        elif 30 < risk_score <= 60:
-
+        elif risk_score <= 60:
             roadmap = [
-                "Create structured academic timetable.",
+                "Create structured timetable.",
                 "Seek faculty mentorship.",
-                "Reduce distractions.",
-                "Strengthen fundamental concepts."
+                "Reduce distractions."
             ]
-
         else:
-
             roadmap = [
                 "Immediate academic counseling recommended.",
-                "Develop daily supervised study plan.",
-                "Prioritize weakest subjects first.",
-                "Minimize non-academic distractions.",
-                "Track weekly performance improvement."
+                "Develop supervised study plan.",
+                "Track weekly improvement."
             ]
 
         for step in roadmap:
