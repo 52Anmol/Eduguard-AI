@@ -5,33 +5,34 @@ import plotly.express as px
 import plotly.graph_objects as go
 import time
 
-
+# -------------------------------------------------
+# Page Config
+# -------------------------------------------------
 st.set_page_config(
     page_title="EduGuard AI",
     page_icon="🚀",
     layout="wide"
 )
 
-
+# -------------------------------------------------
+# Session State
+# -------------------------------------------------
 if "page" not in st.session_state:
     st.session_state.page = "dashboard"
 
 if "risk_score" not in st.session_state:
     st.session_state.risk_score = None
 
-
-# Styling
-
+# -------------------------------------------------
+# Styling (Light + Dark Mode Safe)
+# -------------------------------------------------
 st.markdown("""
 <style>
-
-/* ===== GLOBAL ===== */
 .glow-card {
     padding: 20px;
     border-radius: 15px;
     transition: 0.3s ease;
 }
-
 .result-card {
     padding: 15px;
     border-radius: 10px;
@@ -39,58 +40,39 @@ st.markdown("""
     border-left: 4px solid #0ea5e9;
 }
 
-/* ===== DARK MODE ===== */
+/* Dark */
 [data-theme="dark"] .stApp {
     background: linear-gradient(135deg, #0f172a, #1e293b);
 }
-
 [data-theme="dark"] .glow-card {
     background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(12px);
     color: white;
 }
-
 [data-theme="dark"] .result-card {
     background: rgba(255,255,255,0.05);
     color: white;
 }
 
-[data-theme="dark"] .stButton>button {
-    background: #0ea5e9;
-    color: white;
-}
-
-/* ===== LIGHT MODE ===== */
+/* Light */
 [data-theme="light"] .stApp {
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
 }
-
 [data-theme="light"] .glow-card {
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    background: white;
     color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
-
 [data-theme="light"] .result-card {
     background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     color: #1e293b;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
-
-[data-theme="light"] .stButton>button {
-    background: #2563eb;
-    color: white;
-}
-
-.stButton>button:hover {
-    transform: scale(1.05);
-    transition: 0.2s ease;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-
+# -------------------------------------------------
+# Load Data
+# -------------------------------------------------
 df = pd.read_csv("StudentPerformanceFactors.csv")
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
@@ -98,9 +80,9 @@ score_column = "exam_score"
 median_score = df[score_column].median()
 df["risk"] = df[score_column].apply(lambda x: 1 if x < median_score else 0)
 
-
+# -------------------------------------------------
 # Load Model
-
+# -------------------------------------------------
 model = joblib.load("trained_model.pkl")
 feature_columns = joblib.load("feature_columns.pkl")
 
@@ -133,20 +115,18 @@ if st.session_state.page == "dashboard":
         st.markdown(f"""
         <div class="glow-card">
             <div>{title}</div>
-            <div style="font-size:24px;color:#38bdf8;"><b>{value}</b></div>
+            <div style="font-size:24px;color:#3b82f6;"><b>{value}</b></div>
         </div>
         """, unsafe_allow_html=True)
 
-    with col1:
-        kpi("Total Students", total)
-    with col2:
-        kpi("At Risk %", f"{risk_percent}%")
-    with col3:
-        kpi("Average Score", avg_score)
-    with col4:
-        kpi("Model Status", "Active")
+    with col1: kpi("Total Students", total)
+    with col2: kpi("At Risk %", f"{risk_percent}%")
+    with col3: kpi("Average Score", avg_score)
+    with col4: kpi("Model Status", "Active")
 
     st.divider()
+
+    theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
 
     col1, col2 = st.columns(2)
 
@@ -156,12 +136,12 @@ if st.session_state.page == "dashboard":
             names=["Safe", "At Risk"],
             hole=0.6
         )
-        fig_pie.update_layout(template="plotly_dark", title="Risk Distribution")
+        fig_pie.update_layout(template=theme)
         st.plotly_chart(fig_pie, use_container_width=True)
 
     with col2:
         fig_hist = px.histogram(df, x=score_column, nbins=30)
-        fig_hist.update_layout(template="plotly_dark", title="Score Distribution")
+        fig_hist.update_layout(template=theme)
         st.plotly_chart(fig_hist, use_container_width=True)
 
 # ==========================================================
@@ -182,9 +162,6 @@ elif st.session_state.page == "prediction":
 
     st.divider()
 
-    # -----------------------------
-    # Validation Function
-    # -----------------------------
     def validate(value, min_val, max_val):
         try:
             val = int(value)
@@ -209,15 +186,11 @@ elif st.session_state.page == "prediction":
     sleep_hours, s_valid = validate(sleep_raw, 0, 12)
     previous_score, p_valid = validate(score_raw, 0, 100)
 
-    # -----------------------------
-    # Prediction Button
-    # -----------------------------
     if st.button("Run AI Analysis"):
 
         if not (h_valid and a_valid and s_valid and p_valid):
-            st.error("Please enter valid integer values within allowed ranges.")
+            st.error("Please enter valid integer values.")
         else:
-
             with st.spinner("🧠 AI analyzing behavioral patterns..."):
                 time.sleep(1)
 
@@ -239,17 +212,15 @@ elif st.session_state.page == "prediction":
             prob = model.predict_proba(input_df)[0][1]
             st.session_state.risk_score = int(prob * 100)
 
-    # -----------------------------
+    # -------------------------------------------------
     # Display Results
-    # -----------------------------
+    # -------------------------------------------------
     if st.session_state.risk_score is not None:
 
         risk_score = st.session_state.risk_score
-
-        # Detect theme
         theme = "plotly_dark" if st.get_option("theme.base") == "dark" else "plotly_white"
 
-        # Risk Color + Label
+        # Risk Colors
         if risk_score <= 30:
             bar_color = "#22c55e"
             risk_label = "LOW RISK"
@@ -260,85 +231,100 @@ elif st.session_state.page == "prediction":
             bar_color = "#ef4444"
             risk_label = "HIGH RISK"
 
-        # -----------------------------
-        # PREMIUM GAUGE
-        # -----------------------------
+        # Premium Gauge
         fig = go.Figure(go.Indicator(
             mode="gauge+number",
             value=risk_score,
-            number={'font': {'size': 48}, 'suffix': "%"},
-            title={'text': "<b>AI Risk Intelligence Score</b>", 'font': {'size': 20}},
+            number={'suffix': "%"},
+            title={'text': "AI Risk Intelligence Score"},
             gauge={
-                'shape': "angular",
                 'axis': {'range': [0, 100]},
-                'bar': {'color': bar_color, 'thickness': 0.35},
+                'bar': {'color': bar_color},
                 'steps': [
                     {'range': [0, 30], 'color': "rgba(34,197,94,0.2)"},
                     {'range': [30, 60], 'color': "rgba(250,204,21,0.2)"},
                     {'range': [60, 100], 'color': "rgba(239,68,68,0.2)"}
-                ],
-                'threshold': {
-                    'line': {'color': bar_color, 'width': 6},
-                    'thickness': 0.75,
-                    'value': risk_score
-                }
+                ]
             }
         ))
 
-        fig.update_layout(
-            template=theme,
-            height=420,
-            margin=dict(t=60, b=0, l=20, r=20)
-        )
-
+        fig.update_layout(template=theme, height=400)
         st.plotly_chart(fig, use_container_width=True)
 
         # Risk Badge
         st.markdown(f"""
-        <div style="
-        padding:12px 20px;
+        <div style="padding:10px 20px;
         border-radius:30px;
-        display:inline-block;
-        font-weight:bold;
         background:{bar_color};
         color:white;
-        margin-top:10px;
-        font-size:16px;">
+        display:inline-block;
+        font-weight:bold;">
         {risk_label}
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("## 🚀 Strategic Academic Roadmap")
+        # ==========================================
+        # Academic Stability Index
+        # ==========================================
+        st.markdown("## 📊 Academic Stability Index")
 
-        # -----------------------------
-        # Roadmap
-        # -----------------------------
-        if risk_score <= 10:
-            st.success("Excellent performance stability detected.")
-            roadmap = [
-                "Maintain structured study habits.",
-                "Continue high attendance consistency.",
-                "Engage in advanced skill development.",
-                "Track monthly progress."
-            ]
-        elif risk_score <= 30:
-            roadmap = [
-                "Maintain attendance above 85%.",
-                "Increase study hours slightly.",
-                "Perform weekly academic review."
-            ]
-        elif risk_score <= 60:
-            roadmap = [
-                "Create structured timetable.",
-                "Seek faculty mentorship.",
-                "Reduce distractions."
-            ]
-        else:
-            roadmap = [
-                "Immediate academic counseling recommended.",
-                "Develop supervised study plan.",
-                "Track weekly improvement."
-            ]
+        stability = 100 - risk_score
 
-        for step in roadmap:
-            st.markdown(f'<div class="result-card">• {step}</div>', unsafe_allow_html=True)
+        fig_stability = go.Figure(go.Indicator(
+            mode="number",
+            value=stability,
+            number={'suffix': "%"},
+            title={'text': "Stability Score"}
+        ))
+
+        fig_stability.update_layout(template=theme, height=200)
+        st.plotly_chart(fig_stability, use_container_width=True)
+
+        # ==========================================
+        # Color-Coded Behavioral Impact
+        # ==========================================
+        st.markdown("## 📈 Behavioral Impact Analysis")
+
+        impact = {
+            "Attendance": max(0, 100 - attendance),
+            "Study Hours": max(0, 60 - hours_studied),
+            "Sleep Quality": max(0, 8 - sleep_hours) * 10,
+            "Previous Performance": max(0, 100 - previous_score)
+        }
+
+        impact_df = pd.DataFrame({
+            "Factor": list(impact.keys()),
+            "Impact": list(impact.values())
+        })
+
+        def get_color(val):
+            if val < 30:
+                return "#22c55e"
+            elif val < 60:
+                return "#facc15"
+            else:
+                return "#ef4444"
+
+        impact_df["Color"] = impact_df["Impact"].apply(get_color)
+
+        fig_impact = go.Figure()
+
+        for _, row in impact_df.iterrows():
+            fig_impact.add_trace(go.Bar(
+                x=[row["Impact"]],
+                y=[row["Factor"]],
+                orientation="h",
+                marker_color=row["Color"],
+                text=f'{row["Impact"]}',
+                textposition="inside"
+            ))
+
+        fig_impact.update_layout(
+            template=theme,
+            height=400,
+            xaxis_title="Relative Contribution",
+            yaxis_title="Behavioral Factor",
+            showlegend=False
+        )
+
+        st.plotly_chart(fig_impact, use_container_width=True)
