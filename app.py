@@ -44,7 +44,7 @@ feature_columns = joblib.load("feature_columns.pkl")
 # =====================================================
 if st.session_state.page == "dashboard":
 
-    col1, col2 = st.columns([8,2])
+    col1, col2 = st.columns([8, 2])
 
     with col1:
         st.title("🚀 EduGuard AI - Institutional Dashboard")
@@ -81,7 +81,7 @@ if st.session_state.page == "dashboard":
 # =====================================================
 elif st.session_state.page == "prediction":
 
-    col1, col2 = st.columns([8,2])
+    col1, col2 = st.columns([8, 2])
 
     with col1:
         st.title("🔍 AI Risk Assessment Engine")
@@ -214,19 +214,3 @@ elif st.session_state.page == "prediction":
 
         for step in roadmap:
             st.write("•", step)
-
-        # =====================================================
-        # SEND TO ARDUINO
-        # =====================================================
-        try:
-            import serial
-
-            arduino = serial.Serial("COM3", 9600, timeout=1)  # CHANGE PORT
-            time.sleep(2)
-            arduino.write(f"{risk_score}\n".encode())
-            arduino.close()
-
-            st.success("Hardware Synced Successfully ✅")
-
-        except:
-            st.info("Arduino not connected or COM port incorrect.")
