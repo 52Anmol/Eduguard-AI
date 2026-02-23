@@ -342,3 +342,18 @@ elif st.session_state.page == "prediction":
 
         for step in roadmap:
             st.markdown(f'<div class="result-card">• {step}</div>', unsafe_allow_html=True)
+
+
+
+
+
+import serial
+import time
+
+try:
+    arduino = serial.Serial("COM3", 9600)  # Change COM port
+    time.sleep(2)
+    arduino.write(str(risk_score).encode())
+    arduino.close()
+except:
+    pass
