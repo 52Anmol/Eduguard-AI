@@ -44,7 +44,50 @@ feature_columns = joblib.load("feature_columns.pkl")
 # =====================================================
 if st.session_state.page == "dashboard":
 
-    col1, col2 = st.columns([8, 2])
+    # =====================================================
+    # UI STYLING (Glass + Glow + Smooth Effects)
+    # =====================================================
+    st.markdown("""
+    <style>
+
+    /* Glass Card */
+    .glass-card {
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(14px);
+        border-radius: 18px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(0,255,255,0.15);
+        transition: all 0.4s ease-in-out;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 0 40px rgba(0,255,255,0.55);
+    }
+
+    /* Metric Number */
+    .metric-value {
+        font-size: 42px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #00f5ff, #00ff95);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+        from { text-shadow: 0 0 10px #00f5ff; }
+        to { text-shadow: 0 0 25px #00ff95; }
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    # =====================================================
+    # HEADER SECTION
+    # =====================================================
+    col1, col2 = st.columns([8,2])
 
     with col1:
         st.title("🚀 EduGuard AI - Institutional Dashboard")
@@ -56,10 +99,47 @@ if st.session_state.page == "dashboard":
 
     st.divider()
 
+    # =====================================================
+    # DATA CALCULATIONS
+    # =====================================================
     total = len(df)
     at_risk = int(df["risk"].sum())
     safe = total - at_risk
 
+    # =====================================================
+    # KPI CARDS
+    # =====================================================
+    colA, colB, colC = st.columns(3)
+
+    with colA:
+        st.markdown(f"""
+        <div class="glass-card">
+            <div>Total Students</div>
+            <div class="metric-value">{total}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with colB:
+        st.markdown(f"""
+        <div class="glass-card">
+            <div>Safe Students</div>
+            <div class="metric-value">{safe}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with colC:
+        st.markdown(f"""
+        <div class="glass-card">
+            <div>At Risk Students</div>
+            <div class="metric-value">{at_risk}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # =====================================================
+    # CHARTS SECTION
+    # =====================================================
     col1, col2 = st.columns(2)
 
     with col1:
@@ -68,12 +148,22 @@ if st.session_state.page == "dashboard":
             names=["Safe", "At Risk"],
             hole=0.6
         )
-        fig_pie.update_layout(template="plotly_dark")
+        fig_pie.update_layout(
+            template="plotly_dark",
+            transition_duration=800
+        )
         st.plotly_chart(fig_pie, use_container_width=True)
 
     with col2:
-        fig_hist = px.histogram(df, x=score_column, nbins=30)
-        fig_hist.update_layout(template="plotly_dark")
+        fig_hist = px.histogram(
+            df,
+            x=score_column,
+            nbins=30
+        )
+        fig_hist.update_layout(
+            template="plotly_dark",
+            transition_duration=800
+        )
         st.plotly_chart(fig_hist, use_container_width=True)
 
 # =====================================================
