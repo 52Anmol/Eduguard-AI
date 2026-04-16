@@ -5,27 +5,20 @@ import plotly.express as px
 import plotly.graph_objects as go
 import time
 
-# =====================================================
-# PAGE CONFIG
-# =====================================================
+
 st.set_page_config(
     page_title="EduGuard AI",
     page_icon="🚀",
     layout="wide"
 )
 
-# =====================================================
-# SESSION STATE
-# =====================================================
+
 if "page" not in st.session_state:
     st.session_state.page = "dashboard"
 
 if "risk_score" not in st.session_state:
     st.session_state.risk_score = None
 
-# =====================================================
-# LOAD DATA
-# =====================================================
 df = pd.read_csv("StudentPerformanceFactors.csv")
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
@@ -33,20 +26,14 @@ score_column = "exam_score"
 median_score = df[score_column].median()
 df["risk"] = df[score_column].apply(lambda x: 1 if x < median_score else 0)
 
-# =====================================================
-# LOAD MODEL
-# =====================================================
+
 model = joblib.load("trained_model.pkl")
 feature_columns = joblib.load("feature_columns.pkl")
 
-# =====================================================
-# DASHBOARD PAGE
-# =====================================================
+
 if st.session_state.page == "dashboard":
 
-    # =====================================================
-    # UI STYLING (Glass + Glow + Smooth Effects)
-    # =====================================================
+    
     st.markdown("""
     <style>
 
@@ -84,9 +71,7 @@ if st.session_state.page == "dashboard":
     </style>
     """, unsafe_allow_html=True)
 
-    # =====================================================
-    # HEADER SECTION
-    # =====================================================
+    
     col1, col2 = st.columns([8,2])
 
     with col1:
@@ -99,16 +84,12 @@ if st.session_state.page == "dashboard":
 
     st.divider()
 
-    # =====================================================
-    # DATA CALCULATIONS
-    # =====================================================
+    
     total = len(df)
     at_risk = int(df["risk"].sum())
     safe = total - at_risk
 
-    # =====================================================
-    # KPI CARDS
-    # =====================================================
+    
     colA, colB, colC = st.columns(3)
 
     with colA:
@@ -137,9 +118,7 @@ if st.session_state.page == "dashboard":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # =====================================================
-    # CHARTS SECTION
-    # =====================================================
+    
     col1, col2 = st.columns(2)
 
     with col1:
@@ -166,9 +145,7 @@ if st.session_state.page == "dashboard":
         )
         st.plotly_chart(fig_hist, use_container_width=True)
 
-# =====================================================
-# PREDICTION PAGE
-# =====================================================
+
 elif st.session_state.page == "prediction":
 
     col1, col2 = st.columns([8, 2])
@@ -195,9 +172,7 @@ elif st.session_state.page == "prediction":
         sleep = st.number_input("Sleep Hours (0–12)", 0, 12, 7)
         previous = st.number_input("Previous Score (0–100)", 0, 100, 60)
 
-    # =====================================================
-    # RUN PREDICTION
-    # =====================================================
+    
     if st.button("Run AI Analysis"):
 
         with st.spinner("🧠 AI analyzing behavioral patterns..."):
@@ -221,9 +196,7 @@ elif st.session_state.page == "prediction":
         prob = model.predict_proba(input_df)[0][1]
         st.session_state.risk_score = int(prob * 100)
 
-    # =====================================================
-    # DISPLAY RESULTS
-    # =====================================================
+
     if st.session_state.risk_score is not None:
 
         risk_score = st.session_state.risk_score
@@ -272,9 +245,7 @@ elif st.session_state.page == "prediction":
         </div>
         """, unsafe_allow_html=True)
 
-        # =====================================================
-        # ROADMAP
-        # =====================================================
+        
         st.markdown("## 🚀 Strategic Academic Roadmap")
 
         if risk_score <= 10:
